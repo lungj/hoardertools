@@ -5,12 +5,7 @@
     Because disks don't hoard themselves.
 
     Purpose:
-        Determine disk pool configurations to achieve performance-cost-reliability
-        tradeoffs. Alternate modes include arranging (optimizing) disks into mirrors and
-        stripes and getting data about particular pool configurations.
-
-    Usage:
-        python3 raidcalc.py
+        Provide functionality for calculating information about RAID pools.
 
     Optimization parameters can be set below. Search for "USER CONFIGURATION."
     If optimization is taking too long, try a lower max cost and/or reducing the number of
@@ -577,76 +572,3 @@ def print_notable_configs(
     for att, config in notable.items():
         print_pool_info(config, att)
         print()
-
-
-###### USER CONFIGURATION ######
-MODE = 'optimize'           # 'optimize', 'arrange', or 'test'.
-
-### OPTIMIZATION AND ARRANGE PARAMETERS ###
-MISSION_LENGTH = 3          # How long to keep things running in years.
-MAX_FAILURE = 1 / 10000     # 1 in 10000 chance of losing pool during mission.
-MIN_CAPACITY = 6e12         # Minimum of 8 TB of data in array.
-
-### OPTIMIZATION PARAMETERS ###
-# Optimization mode configuration: find configurations of disks that satisfy certain
-# criteria.
-
-MAX_COST = 1500             # Spend no more than $1500 on disks.
-DISK_CHOICES = [            # What disks are being considered?
-    # The following values are for new drives in Canada (after taxes).
-    # Average failure rate (AFR) goes up after 3 years for HDD (source: Backblaze).
-    HDD('WD4TB', 4e12, afr=0.06, cost=170, replacement_time=96),    # Ship and shuck.
-    HDD('WD8TB', 8e12, afr=0.06, cost=305, replacement_time=96),    # Ship and shuck.
-    SSD('WD Blue 3D 1TB', 1e12, cost=190, replacement_time=24),     # Walk to store.
-    ]
-
-### ARRANGE CONFIGURATION ###
-# Arrange a set of disks. Disks must be grouped by type. This optimizer never pairs
-# mismatched disks into a mirror.
-
-ARRANGEMENT = []
-ARRANGEMENT.extend([HDD('WD4TB', 4e12, cost=170)] * 7)      # 7x 4TB drives
-ARRANGEMENT.extend([HDD('WD8TB', 8e12, cost=305)] * 6)      # 6x 8TB drives
-
-### TEST CONFIGURATION ###
-# Input a configuration to see information about its configuration.
-
-CONFIGURATION = DiskArray([                     # 3 stripes of mirrored drives in RAID 10.
-            Mirror([
-                HDD('WD4TB', 4e12, cost=170),
-                HDD('WD8TB', 8e12, cost=305),
-                ]),
-            Mirror([
-                HDD('WD8TB', 8e12, cost=305),
-                HDD('WD8TB', 8e12, cost=305),
-                ]),
-            Mirror([
-                HDD('WD8TB', 8e12, cost=305),
-                HDD('WD8TB', 8e12, cost=305),
-                ]),
-            ])
-
-###### END OF USER CONFIGURATION ######
-
-if __name__ == '__main__':
-    locale.setlocale(locale.LC_ALL, '')
-
-    if MODE == 'optimize':
-        configs = generate_disk_configurations(
-                DISK_CHOICES,
-                max_afr=1 - ((1 - MAX_FAILURE) ** (1 / MISSION_LENGTH)),
-                min_capacity=MIN_CAPACITY,
-                max_cost=MAX_COST)
-        print_notable_configs(configs)
-
-    elif MODE == 'arrange':
-        configs = generate_disk_configurations(
-                None,
-                disks=[ARRANGEMENT],
-                max_afr=1 - ((1 - MAX_FAILURE) ** (1 / MISSION_LENGTH)),
-                min_capacity=MIN_CAPACITY,
-                max_cost=MAX_COST)
-        print_notable_configs(configs)
-
-    elif MODE == 'test':
-        print_pool_info(CONFIGURATION)
