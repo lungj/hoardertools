@@ -60,7 +60,7 @@ def entab(x:str):
     '''Entab string x and add a newline at the end.'''
     s = ''
     for line in x.split('\n'):
-        s += '\t' + line + '\n'
+        s += '    ' + line + '\n'
     return s
 
 
@@ -320,8 +320,8 @@ class DiskArray(object):
 
 
     def __repr__(self):
-        s = 'Dev:\n'
-        s = s + 'Dev:\n'.join([entab(repr(device)) + '\n' for device in self._disks])
+        s = 'Stripe:\n'
+        s = s + ''.join([entab(repr(device)) + '' for device in self._disks])
         return s.strip()
 
 
@@ -401,7 +401,7 @@ class Mirror(DiskArray):
 
 
     def __repr__(self):
-        s = '\n'.join([repr(device) for device in self._disks])
+        s = 'Mirror: ' + ' '.join([repr(device) for device in self._disks])
         return s
 
 
